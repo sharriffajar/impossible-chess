@@ -34,8 +34,14 @@
   display: inline-block;
   border: 1px solid #444;
 }
-.badge-white { background-color: #fff; }
-.badge-black { background-color: #222; }
+
+.badge-white {
+  background-color: #fff;
+}
+
+.badge-black {
+  background-color: #222;
+}
 
 .captured-box {
   font-size: 0.95rem;
@@ -110,7 +116,7 @@
   font-weight: 800;
   font-family: monospace;
   color: #e5a93c;
-  text-shadow: 0 1px 3px rgba(0,0,0,0.95);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.95);
   pointer-events: none;
   white-space: nowrap;
 }
@@ -150,10 +156,23 @@
   transition: background-color 0.12s ease;
 }
 
-.square.light { background-color: var(--light-square); color: #111; }
-.square.dark { background-color: var(--dark-square); color: #111; }
-.square.selected { background-color: var(--selected-square) !important; }
-.square.last-move { background-color: var(--last-move) !important; }
+.square.light {
+  background-color: var(--light-square);
+  color: #111;
+}
+
+.square.dark {
+  background-color: var(--dark-square);
+  color: #111;
+}
+
+.square.selected {
+  background-color: var(--selected-square) !important;
+}
+
+.square.last-move {
+  background-color: var(--last-move) !important;
+}
 
 .square.king-in-check {
   background: radial-gradient(circle at center, #ff3b30 0%, #b31010 70%, #730606 100%) !important;
@@ -161,9 +180,17 @@
 }
 
 @keyframes pulse-check {
-  0% { box-shadow: inset 0 0 0 0 rgba(255, 59, 48, 0.7); }
-  70% { box-shadow: inset 0 0 15px 4px rgba(255, 59, 48, 0.9); }
-  100% { box-shadow: inset 0 0 0 0 rgba(255, 59, 48, 0.7); }
+  0% {
+    box-shadow: inset 0 0 0 0 rgba(255, 59, 48, 0.7);
+  }
+
+  70% {
+    box-shadow: inset 0 0 15px 4px rgba(255, 59, 48, 0.9);
+  }
+
+  100% {
+    box-shadow: inset 0 0 0 0 rgba(255, 59, 48, 0.7);
+  }
 }
 
 .square.hint::after {
@@ -195,11 +222,23 @@
   line-height: 1;
 }
 
-.coord-rank { top: 3px; left: 3px; }
-.coord-file { bottom: 3px; right: 3px; }
+.coord-rank {
+  top: 3px;
+  left: 3px;
+}
 
-.square.light .coordinate { color: var(--dark-square); }
-.square.dark .coordinate { color: var(--light-square); }
+.coord-file {
+  bottom: 3px;
+  right: 3px;
+}
+
+.square.light .coordinate {
+  color: var(--dark-square);
+}
+
+.square.dark .coordinate {
+  color: var(--light-square);
+}
 
 .piece-white {
   color: #ffffff;
@@ -224,8 +263,14 @@
   font-size: 0.85rem;
 }
 
-.moves-container::-webkit-scrollbar { width: 6px; }
-.moves-container::-webkit-scrollbar-thumb { background: #2f353d; border-radius: 3px; }
+.moves-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.moves-container::-webkit-scrollbar-thumb {
+  background: #2f353d;
+  border-radius: 3px;
+}
 
 .move-row {
   display: flex;
@@ -233,8 +278,19 @@
   border-bottom: 1px solid #1e2227;
   align-items: center;
 }
-.move-num { width: 38px; color: var(--text-muted); font-size: 0.8rem; }
-.move-white, .move-black { flex: 1; padding: 0 4px; }
+
+.move-num {
+  width: 38px;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.move-white,
+.move-black {
+  flex: 1;
+  padding: 0 4px;
+}
+
 .move-btn {
   cursor: pointer;
   border-radius: 3px;
@@ -242,10 +298,12 @@
   display: inline-block;
   transition: all 0.12s ease;
 }
+
 .move-btn:hover {
   background: #2b323c;
   color: #fcd34d;
 }
+
 .move-btn.active-move {
   background: #2e8253;
   color: #ffffff;
@@ -274,6 +332,7 @@
   font-weight: 600;
   transition: all 0.15s ease;
 }
+
 .hof-tab-btn.active {
   background: #27362c;
   border-color: #2e8253;
@@ -282,14 +341,35 @@
 
 /* Mobile Adjustments for Board */
 @media (max-width: 520px) {
-  .player-bar { padding: 5px 8px; font-size: 0.8rem; }
-  .player-profile { gap: 6px; }
-  .player-timer { font-size: 0.9rem; padding: 2px 6px; }
-  .board-stage { gap: 6px; }
-  #eval-bar-container { width: 16px; }
-  #eval-score-text { font-size: 0.55rem; }
+  .player-bar {
+    padding: 5px 8px;
+    font-size: 0.8rem;
+  }
+
+  .player-profile {
+    gap: 6px;
+  }
+
+  .player-timer {
+    font-size: 0.9rem;
+    padding: 2px 6px;
+  }
+
+  .board-stage {
+    gap: 6px;
+  }
+
+  #eval-bar-container {
+    width: 16px;
+  }
+
+  #eval-score-text {
+    font-size: 0.55rem;
+  }
 }
 
 @media (max-width: 380px) {
-  .coordinate { display: none; }
+  .coordinate {
+    display: none;
+  }
 }
