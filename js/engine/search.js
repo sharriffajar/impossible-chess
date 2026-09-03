@@ -213,10 +213,10 @@ export class ChessSearchEngine {
       maxDepth = 3;
       timeLimitMs = 600;
     } else if (difficulty === 4) {
-      maxDepth = 6;
-      timeLimitMs = 1200;
+      maxDepth = 4;
+      timeLimitMs = 750;
       if (clockTimeSec > 0) {
-        timeLimitMs = Math.max(350, Math.min(1500, Math.floor(clockTimeSec * 50)));
+        timeLimitMs = Math.max(250, Math.min(850, Math.floor(clockTimeSec * 35)));
       }
     }
 

@@ -377,12 +377,15 @@
   }
   const adaptiveLearning = new AdaptiveLearning();
 
-  // 7. Search Engine
+  // 7. High-Performance Search Engine (Time-budgeted & Freeze-Free)
   class ChessSearchEngine {
     constructor(chessInstance) {
       this.chess = chessInstance;
       this.nodesEvaluated = 0;
+      this.searchDeadline = 0;
+      this.searchTimeout = false;
     }
+
     orderMoves(moves, currentHistory = []) {
       const mvvLva = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 0 };
       return moves.sort((a, b) => {
@@ -407,78 +410,107 @@
         return scoreB - scoreA;
       });
     }
-    quiescence(alpha, beta, side) {
+
+    quiescence(alpha, beta, side, qDepth = 0) {
       this.nodesEvaluated++;
+      if ((this.nodesEvaluated & 255) === 0) {
+        if (Date.now() > this.searchDeadline) this.searchTimeout = true;
+      }
       const standPat = (side === 'w' ? 1 : -1) * evaluateBoard(this.chess);
+      if (qDepth >= 3 || this.searchTimeout) return standPat;
+
       if (standPat >= beta) return beta;
       if (alpha < standPat) alpha = standPat;
+
       const captures = this.chess.moves({ verbose: true }).filter(m => m.captured || m.promotion);
       const orderedCaptures = this.orderMoves(captures);
       for (const move of orderedCaptures) {
         this.chess.move(move);
-        const score = -this.quiescence(-beta, -alpha, side === 'w' ? 'b' : 'w');
+        const score = -this.quiescence(-beta, -alpha, side === 'w' ? 'b' : 'w', qDepth + 1);
         this.chess.undo();
+        if (this.searchTimeout) return alpha;
         if (score >= beta) return beta;
         if (score > alpha) alpha = score;
       }
       return alpha;
     }
-    minimax(depth, alpha, beta, isMaximizing, currentHistory = []) {
+
+    minimax(depth, alpha, beta, isMaximizing, currentHistory = [], ply = 0) {
       this.nodesEvaluated++;
+      if ((this.nodesEvaluated & 255) === 0) {
+        if (Date.now() > this.searchDeadline) this.searchTimeout = true;
+      }
+      if (this.searchTimeout) return isMaximizing ? alpha : beta;
+
       const hash = zobrist.computeHash(this.chess);
       const ttEntry = transpositionTable.get(hash);
-      if (ttEntry && ttEntry.depth >= depth) {
+      if (ttEntry && ttEntry.depth >= depth && ply > 0) {
         if (ttEntry.flag === 'exact') return ttEntry.score;
         if (ttEntry.flag === 'lower' && ttEntry.score > alpha) alpha = ttEntry.score;
         if (ttEntry.flag === 'upper' && ttEntry.score < beta) beta = ttEntry.score;
         if (alpha >= beta) return ttEntry.score;
       }
+
       if (depth === 0) {
-        const qScore = this.quiescence(alpha, beta, this.chess.turn());
+        const qScore = this.quiescence(alpha, beta, this.chess.turn(), 0);
         return isMaximizing ? qScore : -qScore;
       }
+
       const rawMoves = this.chess.moves({ verbose: true });
       if (rawMoves.length === 0) {
         if (this.chess.in_check()) return isMaximizing ? (-999999 + (4 - depth)) : (999999 - (4 - depth));
         return 0;
       }
+
       const moves = this.orderMoves(rawMoves, currentHistory);
-      let bestMove = null;
+      let bestMove = moves[0];
       let originalAlpha = alpha;
+
       if (isMaximizing) {
         let maxEval = -Infinity;
         for (const move of moves) {
           this.chess.move(move);
-          const evaluation = this.minimax(depth - 1, alpha, beta, false, [...currentHistory, move.san]);
+          const evaluation = this.minimax(depth - 1, alpha, beta, false, [...currentHistory, move.san], ply + 1);
           this.chess.undo();
+          if (this.searchTimeout) break;
           if (evaluation > maxEval) { maxEval = evaluation; bestMove = move; }
           alpha = Math.max(alpha, evaluation);
           if (beta <= alpha) break;
         }
-        let flag = 'exact';
-        if (maxEval <= originalAlpha) flag = 'upper';
-        else if (maxEval >= beta) flag = 'lower';
-        transpositionTable.set(hash, { depth, score: maxEval, flag, bestMove });
+        if (!this.searchTimeout) {
+          let flag = 'exact';
+          if (maxEval <= originalAlpha) flag = 'upper';
+          else if (maxEval >= beta) flag = 'lower';
+          transpositionTable.set(hash, { depth, score: maxEval, flag, bestMove });
+        }
         return maxEval;
       } else {
         let minEval = Infinity;
         for (const move of moves) {
           this.chess.move(move);
-          const evaluation = this.minimax(depth - 1, alpha, beta, true, [...currentHistory, move.san]);
+          const evaluation = this.minimax(depth - 1, alpha, beta, true, [...currentHistory, move.san], ply + 1);
           this.chess.undo();
+          if (this.searchTimeout) break;
           if (evaluation < minEval) { minEval = evaluation; bestMove = move; }
           beta = Math.min(beta, evaluation);
           if (beta <= alpha) break;
         }
-        let flag = 'exact';
-        if (minEval <= originalAlpha) flag = 'upper';
-        else if (minEval >= beta) flag = 'lower';
-        transpositionTable.set(hash, { depth, score: minEval, flag, bestMove });
+        if (!this.searchTimeout) {
+          let flag = 'exact';
+          if (minEval <= originalAlpha) flag = 'upper';
+          else if (minEval >= beta) flag = 'lower';
+          transpositionTable.set(hash, { depth, score: minEval, flag, bestMove });
+        }
         return minEval;
       }
     }
+
     findBestMove(difficulty = 4, side = 'b') {
       this.nodesEvaluated = 0;
+      this.searchTimeout = false;
+      const budgetMs = difficulty >= 4 ? 750 : (difficulty === 3 ? 450 : 250);
+      this.searchDeadline = Date.now() + budgetMs;
+
       const history = this.chess.history();
       if (history.length < 12) {
         const bookSan = getBookMove(this.chess);
@@ -488,25 +520,31 @@
           if (found) return { move: found, score: 0, nodes: 1, isBook: true };
         }
       }
+
       const rawMoves = this.chess.moves({ verbose: true });
       if (rawMoves.length === 0) return null;
       if (rawMoves.length === 1) return { move: rawMoves[0], score: 0, nodes: 1 };
+
       const currentHistory = this.chess.history();
       const moves = this.orderMoves(rawMoves, currentHistory);
       const isMaximizing = (side === 'w');
-      let bestMove = moves[0];
-      let bestScore = isMaximizing ? -Infinity : Infinity;
+      let globalBestMove = moves[0];
+      let globalBestScore = isMaximizing ? -Infinity : Infinity;
       const targetDepth = difficulty >= 4 ? 4 : (difficulty === 3 ? 3 : (difficulty === 2 ? 2 : 1));
-      let currentBestMove = moves[0];
+
       for (let d = 1; d <= targetDepth; d++) {
         let alpha = -Infinity;
         let beta = Infinity;
         let iterationBestScore = isMaximizing ? -Infinity : Infinity;
-        let iterationBestMove = currentBestMove;
+        let iterationBestMove = globalBestMove;
+
         for (const move of moves) {
           this.chess.move(move);
-          const score = this.minimax(d - 1, alpha, beta, !isMaximizing, [...currentHistory, move.san]);
+          const score = this.minimax(d - 1, alpha, beta, !isMaximizing, [...currentHistory, move.san], 1);
           this.chess.undo();
+
+          if (this.searchTimeout) break;
+
           if (isMaximizing) {
             if (score > iterationBestScore) { iterationBestScore = score; iterationBestMove = move; }
             alpha = Math.max(alpha, score);
@@ -516,12 +554,17 @@
           }
           if (beta <= alpha) break;
         }
-        currentBestMove = iterationBestMove;
-        bestMove = iterationBestMove;
-        bestScore = iterationBestScore;
-        if (Math.abs(bestScore) > 900000) break;
+
+        if (!this.searchTimeout) {
+          globalBestMove = iterationBestMove;
+          globalBestScore = iterationBestScore;
+          if (Math.abs(globalBestScore) > 900000) break;
+        } else {
+          break; // Return highest completed iterative depth move
+        }
       }
-      return { move: bestMove, score: bestScore, nodes: this.nodesEvaluated, isBook: false };
+
+      return { move: globalBestMove, score: globalBestScore, nodes: this.nodesEvaluated, isBook: false };
     }
   }
 
