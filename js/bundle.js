@@ -1127,9 +1127,12 @@
   }
 
   function toggleSound() {
-    const sel = document.getElementById('select-sound');
-    if (!sel) return;
-    sound.enabled = (sel.value === 'on');
+    sound.enabled = !sound.enabled;
+    const btn = document.getElementById('sound-toggle');
+    if (btn) {
+      btn.innerText = sound.enabled ? "Audio: On" : "Audio: Off";
+      btn.style.color = sound.enabled ? "#fff" : "var(--text-muted)";
+    }
   }
 
   function loadScenario(type) {

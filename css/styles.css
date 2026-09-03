@@ -206,6 +206,7 @@ button.btn-primary:hover:not(:disabled) {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
   margin-bottom: 8px;
   font-size: 0.85rem;
 }
@@ -214,15 +215,25 @@ button.btn-primary:hover:not(:disabled) {
   margin-bottom: 0;
 }
 
+.setting-item label {
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
 select {
   background: #14171a;
   color: #fff;
   border: 1px solid var(--border-color);
-  padding: 4px 8px;
+  padding: 5px 8px;
   border-radius: 4px;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   outline: none;
   touch-action: manipulation;
+  max-width: 65%;
+  flex: 1;
+  text-overflow: ellipsis;
 }
 
 .modal-overlay {

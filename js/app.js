@@ -595,7 +595,9 @@ export function copyPGN() {
 }
 
 export function changeDifficulty() {
-  aiDifficulty = parseInt(document.getElementById('ai-difficulty').value, 10);
+  const el = document.getElementById('select-difficulty') || document.getElementById('ai-difficulty');
+  if (!el) return;
+  aiDifficulty = parseInt(el.value, 10);
   const badge = document.getElementById('mode-badge');
   if (badge) {
     badge.innerText = aiDifficulty === 4 ? "Impossible Mode" : "Regular Mode";
@@ -603,13 +605,17 @@ export function changeDifficulty() {
 }
 
 export function changePlayerSide() {
-  playerColor = document.getElementById('player-side').value;
+  const el = document.getElementById('select-side') || document.getElementById('player-side');
+  if (!el) return;
+  playerColor = el.value;
   isBoardFlipped = (playerColor === 'b');
   newGame();
 }
 
 export function changeTimerSetting() {
-  const val = parseInt(document.getElementById('game-timer-select').value, 10);
+  const el = document.getElementById('select-timer') || document.getElementById('game-timer-select');
+  if (!el) return;
+  const val = parseInt(el.value, 10);
   timerBaseSeconds = val;
   whiteTime = val;
   blackTime = val;
@@ -624,7 +630,10 @@ export function changeTimerSetting() {
 
 export function toggleSound() {
   sound.enabled = !sound.enabled;
-  document.getElementById('sound-toggle').innerText = sound.enabled ? "Audio: On" : "Audio: Muted";
+  const btn = document.getElementById('sound-toggle');
+  if (btn) {
+    btn.innerText = sound.enabled ? "Audio: On" : "Audio: Off";
+  }
 }
 
 export function loadScenario(type) {

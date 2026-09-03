@@ -149,28 +149,28 @@
       <!-- Quick Settings Card -->
       <div class="card">
         <div class="setting-item">
-          <label for="ai-difficulty">AI Difficulty:</label>
-          <select id="ai-difficulty" onchange="changeDifficulty()">
-            <option value="4" selected>Grandmaster Engine (Impossible)</option>
-            <option value="3">Advanced (Depth 3 + PST + Ordering)</option>
-            <option value="2">Intermediate (Depth 2 + PST)</option>
+          <label for="select-difficulty">Difficulty:</label>
+          <select id="select-difficulty" onchange="changeDifficulty()">
+            <option value="4" selected>Grandmaster (Impossible)</option>
+            <option value="3">Advanced (Depth 3)</option>
+            <option value="2">Intermediate (Depth 2)</option>
             <option value="1">Beginner (Depth 1)</option>
           </select>
         </div>
         <div class="setting-item">
-          <label for="player-side">Play As:</label>
-          <select id="player-side" onchange="changePlayerSide()">
+          <label for="select-side">Play As:</label>
+          <select id="select-side" onchange="changePlayerSide()">
             <option value="w" selected>White (First Move)</option>
             <option value="b">Black (AI First)</option>
           </select>
         </div>
         <div class="setting-item">
-          <label for="game-timer-select">Chess Timer:</label>
-          <select id="game-timer-select" onchange="changeTimerSetting()">
-            <option value="0" selected>No Timer (Casual)</option>
-            <option value="180">Blitz (3 Minutes)</option>
-            <option value="300">Blitz (5 Minutes)</option>
-            <option value="600">Rapid (10 Minutes)</option>
+          <label for="select-timer">Timer:</label>
+          <select id="select-timer" onchange="changeTimerSetting()">
+            <option value="0" selected>Casual (No Timer)</option>
+            <option value="180">Blitz (3 Min)</option>
+            <option value="300">Blitz (5 Min)</option>
+            <option value="600">Rapid (10 Min)</option>
           </select>
         </div>
         <div class="setting-item">
