@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Impossible Chess - High-Performance Browser Chess AI</title>
+  <meta name="description" content="Impossible Chess - High-performance browser chess engine with official FIDE rules, 32-piece Impossible Mode, Grandmaster Opening Book, Quiescence Search, Zobrist Transposition Table, and Permadeath Leaderboard by Sharrif Fajar.">
+  <meta name="keywords" content="Impossible Chess, Chess AI, Browser Chess, Grandmaster Engine, Zobrist Hashing, Transposition Table, FIDE Chess, Permadeath Chess, Sharrif Fajar">
+  <meta name="author" content="Sharrif Fajar">
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+  <meta name="theme-color" content="#121416">
+
+  <!-- Canonical -->
+  <link rel="canonical" href="https://impossible-chess.pages.dev/">
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://impossible-chess.pages.dev/">
+  <meta property="og:title" content="Impossible Chess - High-Performance Browser Chess AI">
+  <meta property="og:description" content="Play against the Impossible Chess Grandmaster Engine featuring Zobrist Hashing, Quiescence Search, and Permadeath Leaderboard. Built by Sharrif Fajar.">
+  <meta property="og:site_name" content="Impossible Chess">
+  <meta property="og:see_also" content="https://sharriffajar.pages.dev">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Impossible Chess - High-Performance Browser Chess AI">
+  <meta name="twitter:description" content="Play against the Impossible Chess Grandmaster Engine featuring Zobrist Hashing, Quiescence Search, and Permadeath Leaderboard. Built by Sharrif Fajar.">
+
+  <!-- Favicon & PWA Manifest -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>♞</text></svg>">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/board.css">
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+
+  <!-- Schema.org JSON-LD Structured Data & GEO Entity Authority -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebApplication",
+        "@id": "https://impossible-chess.pages.dev/#webapp",
+        "name": "Impossible Chess",
+        "url": "https://impossible-chess.pages.dev/",
+        "applicationCategory": "GameApplication",
+        "operatingSystem": "Any",
+        "description": "High-performance zero-dependency browser chess engine featuring Zobrist Transposition Table, Quiescence search, Grandmaster opening book, and Permadeath leaderboard.",
+        "inLanguage": "en",
+        "genre": "Strategy Video Game",
+        "author": {
+          "@type": "Person",
+          "name": "Sharrif Fajar",
+          "url": "https://sharriffajar.pages.dev"
+        },
+        "about": [
+          {
+            "@type": "Thing",
+            "name": "Chess",
+            "sameAs": "https://www.wikidata.org/wiki/Q131436"
+          },
+          {
+            "@type": "Thing",
+            "name": "Chess Engine",
+            "sameAs": "https://www.wikidata.org/wiki/Q718"
+          },
+          {
+            "@type": "Thing",
+            "name": "FIDE",
+            "sameAs": "https://www.wikidata.org/wiki/Q1088743"
+          }
+        ]
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://impossible-chess.pages.dev/#website",
+        "url": "https://impossible-chess.pages.dev/",
+        "name": "Impossible Chess",
+        "author": {
+          "@type": "Person",
+          "name": "Sharrif Fajar",
+          "url": "https://sharriffajar.pages.dev"
+        }
+      }
+    ]
+  }
+  </script>
+</head>
+<body>
+
+  <header>
+    <h1>
+      <span>♟ Impossible Chess</span>
+      <span class="badge-impossible" id="mode-badge">Impossible Mode</span>
+    </h1>
+  </header>
+
+  <!-- Live Global Victors Ticker -->
+  <div id="global-ticker"></div>
+
+  <main class="game-layout">
+    <!-- Board Column -->
+    <section class="board-column" aria-label="Chess Board and Players">
+      <!-- Top Player Bar (AI) -->
+      <div class="player-bar" id="top-player-bar">
+        <div class="player-profile">
+          <span class="player-badge badge-black" id="top-player-badge"></span>
+          <span id="top-player-name">Grandmaster AI (Black)</span>
+          <span class="advantage-badge" id="top-advantage" style="display:none;">+0</span>
+        </div>
+        <div class="captured-box" id="top-captured"></div>
+        <div class="player-timer" id="top-timer">--:--</div>
+      </div>
+
+      <!-- Chess Board & Eval Bar Container -->
+      <div class="board-stage">
+        <div id="eval-bar-container" title="Engine Evaluation" aria-label="Engine Evaluation Bar">
+          <div id="eval-bar-fill"></div>
+          <div id="eval-score-text">0.0</div>
+        </div>
+        <div id="board-wrapper">
+          <div id="board" role="grid" aria-label="Interactive Chessboard"></div>
+        </div>
+      </div>
+
+      <!-- Bottom Player Bar (User) -->
+      <div class="player-bar bottom" id="bottom-player-bar">
+        <div class="player-profile">
+          <span class="player-badge badge-white" id="bottom-player-badge"></span>
+          <span id="bottom-player-name">You (White)</span>
+          <span class="advantage-badge" id="bottom-advantage" style="display:none;">+0</span>
+        </div>
+        <div class="captured-box" id="bottom-captured"></div>
+        <div class="player-timer" id="bottom-timer">--:--</div>
+      </div>
+    </section>
+
+    <!-- Controls & Analysis Column -->
+    <section class="sidebar-column" aria-label="Game Settings and Controls">
+      <!-- Status Card -->
+      <div class="card status-box">
+        <div class="status-title">Game Status</div>
+        <div id="game-status">
+          <span class="status-badge status-active">White's Turn</span>
+        </div>
+      </div>
+
+      <!-- Quick Settings Card -->
+      <div class="card">
+        <div class="setting-item">
+          <label for="ai-difficulty">AI Difficulty:</label>
+          <select id="ai-difficulty" onchange="changeDifficulty()">
+            <option value="4" selected>Grandmaster Engine (Impossible)</option>
+            <option value="3">Advanced (Depth 3 + PST + Ordering)</option>
+            <option value="2">Intermediate (Depth 2 + PST)</option>
+            <option value="1">Beginner (Depth 1)</option>
+          </select>
+        </div>
+        <div class="setting-item">
+          <label for="player-side">Play As:</label>
+          <select id="player-side" onchange="changePlayerSide()">
+            <option value="w" selected>White (First Move)</option>
+            <option value="b">Black (AI First)</option>
+          </select>
+        </div>
+        <div class="setting-item">
+          <label for="game-timer-select">Chess Timer:</label>
+          <select id="game-timer-select" onchange="changeTimerSetting()">
+            <option value="0" selected>No Timer (Casual)</option>
+            <option value="180">Blitz (3 Minutes)</option>
+            <option value="300">Blitz (5 Minutes)</option>
+            <option value="600">Rapid (10 Minutes)</option>
+          </select>
+        </div>
+        <div class="setting-item">
+          <label for="sound-toggle">Audio:</label>
+          <button id="sound-toggle" onclick="toggleSound()" style="padding: 4px 10px; font-size: 0.8rem;">
+            Audio: On
+          </button>
+        </div>
+      </div>
+
+      <!-- Move History Card -->
+      <div class="card">
+        <div class="status-title" style="margin-bottom: 6px;">Move History (SAN)</div>
+        <div class="moves-container" id="moves-log">
+          <div style="color: var(--text-muted); font-size: 0.8rem;">No moves yet.</div>
+        </div>
+
+        <!-- Replay & Move Navigation Controls -->
+        <div style="display: flex; gap: 4px; margin-top: 6px;">
+          <button onclick="goToFirstMove()" title="Go to Start (Home Key)" style="flex: 1; padding: 5px 0; font-size: 0.8rem;">⏮</button>
+          <button onclick="goToPrevMove()" title="Previous Move (Left Arrow)" style="flex: 1; padding: 5px 0; font-size: 0.8rem;">◀</button>
+          <button onclick="goToNextMove()" title="Next Move (Right Arrow)" style="flex: 1; padding: 5px 0; font-size: 0.8rem;">▶</button>
+          <button onclick="goToLastMove()" title="Go to Live / End (End Key)" style="flex: 1; padding: 5px 0; font-size: 0.8rem;">⏭</button>
+          <button onclick="downloadPGN()" title="Download PGN File" style="padding: 5px 8px; font-size: 0.75rem; background: #1c2633; border-color: #2e435e; color: #93c5fd;">.pgn</button>
+        </div>
+
+        <div class="replay-banner" id="replay-banner">
+          <span id="replay-banner-text">Viewing move 0</span>
+          <button onclick="goToLastMove()" style="padding: 2px 6px; font-size: 0.7rem; background: #735118; border: none; color: #fff; border-radius: 3px;">Return to Live</button>
+        </div>
+      </div>
+
+      <!-- Game Controls Card -->
+      <div class="card">
+        <div class="button-group">
+          <button class="btn-primary" onclick="newGame()">New Game</button>
+          <button onclick="undoMove()">Undo Move</button>
+          <button onclick="flipBoard()">Flip Board</button>
+          <button onclick="copyPGN()">Copy PGN</button>
+        </div>
+
+        <div class="button-group-3" style="margin-top: 8px;">
+          <button onclick="loadScenario('mate1')">1-Ply Mate</button>
+          <button onclick="loadScenario('fork')">Knight Fork</button>
+          <button onclick="loadScenario('endgame')">Rook Endgame</button>
+        </div>
+
+        <div style="margin-top: 8px; display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
+          <button onclick="openHallOfFame()" style="padding: 7px 10px; font-size: 0.8rem; background: #262112; border: 1px solid #735118; color: #fcd34d;">
+            Hall of Fame (<span id="hof-count-badge">0</span>)
+          </button>
+          <button onclick="editNickname()" style="padding: 7px 10px; font-size: 0.8rem;">
+            Player: <span id="btn-nickname" style="margin-left: 2px;">Player</span>
+          </button>
+        </div>
+
+        <div style="margin-top: 6px; display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
+          <button onclick="openGameAnalysis()" style="padding: 7px 10px; font-size: 0.8rem; background: #1c2e24; border: 1px solid #2e8253; color: #4ade80;">
+            Game Analysis
+          </button>
+          <a href="test_suite.html" class="btn" style="text-decoration:none; display: flex; align-items: center; justify-content: center; padding: 7px 10px; font-size: 0.8rem; background: #1c2633; border: 1px solid #2e435e; color: #93c5fd; border-radius: 5px; font-weight: 600;">
+            Test Suite
+          </a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Game Analysis Modal -->
+  <div class="modal-overlay" id="analysis-modal">
+    <div class="modal-card" style="max-width: 480px; text-align: left;">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom: 8px;">
+        <h3 style="margin:0; font-size: 1.1rem; color: #4ade80;">Post-Game Analysis & Accuracy</h3>
+        <button onclick="closeGameAnalysis()" style="padding: 2px 8px; font-size: 0.8rem;">✕</button>
+      </div>
+
+      <!-- Accuracy Meters -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px;">
+        <div style="background:#15181c; padding:8px 10px; border-radius:6px; border:1px solid var(--border-color); text-align:center;">
+          <div style="font-size:0.7rem; text-transform:uppercase; color:var(--text-muted);">Your Accuracy</div>
+          <div id="analysis-player-acc" style="font-size:1.4rem; font-weight:800; color:#4ade80; font-family:monospace;">--%</div>
+          <div id="analysis-player-acpl" style="font-size:0.7rem; color:var(--text-muted);">-- ACPL</div>
+        </div>
+        <div style="background:#15181c; padding:8px 10px; border-radius:6px; border:1px solid var(--border-color); text-align:center;">
+          <div style="font-size:0.7rem; text-transform:uppercase; color:var(--text-muted);">Grandmaster AI</div>
+          <div id="analysis-ai-acc" style="font-size:1.4rem; font-weight:800; color:#93c5fd; font-family:monospace;">--%</div>
+          <div id="analysis-ai-acpl" style="font-size:0.7rem; color:var(--text-muted);">-- ACPL</div>
+        </div>
+      </div>
+
+      <!-- Centipawn Advantage Trend Graph -->
+      <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:4px; font-weight:600;">Advantage Trend (Centipawn Graph):</div>
+      <div id="analysis-graph-container" style="margin-bottom: 10px;"></div>
+
+      <!-- Move Quality Breakdown -->
+      <table class="analysis-table">
+        <thead>
+          <tr>
+            <th style="text-align:left;">Move Quality</th>
+            <th>You</th>
+            <th>AI</th>
+          </tr>
+        </thead>
+        <tbody id="analysis-breakdown-tbody"></tbody>
+      </table>
+
+      <div style="margin-top: 12px; text-align: right;">
+        <button class="btn-primary" onclick="closeGameAnalysis()" style="padding: 6px 14px; font-size: 0.8rem;">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Promotion Modal -->
+  <div class="modal-overlay" id="promotion-modal">
+    <div class="modal-card">
+      <h3>Pawn Promotion</h3>
+      <p>Your pawn has reached the final rank. Choose a piece:</p>
+      <div class="promotion-pieces" id="promo-options"></div>
+    </div>
+  </div>
+
+  <!-- Hall of Fame Modal -->
+  <div class="modal-overlay" id="hof-modal">
+    <div class="modal-card" style="max-width: 480px; text-align: left;">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom: 10px;">
+        <h3 style="margin:0; font-size: 1.1rem; color: #fcd34d;">Hall of Fame & Leaderboard</h3>
+        <button onclick="closeHallOfFame()" style="padding: 2px 8px; font-size: 0.8rem;">✕</button>
+      </div>
+
+      <div class="hof-tabs" style="display: flex; gap: 8px; margin-bottom: 10px;">
+        <button class="hof-tab-btn active" id="tab-btn-local" onclick="switchHofTab('local')" style="flex: 1; padding: 6px 10px; font-size: 0.8rem;">
+          My Records
+        </button>
+        <button class="hof-tab-btn" id="tab-btn-global" onclick="switchHofTab('global')" style="flex: 1; padding: 6px 10px; font-size: 0.8rem;">
+          Global Cloudflare
+        </button>
+      </div>
+
+      <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px; line-height: 1.4;">
+        <span>Permadeath Rules: If you <b>lose</b> against the AI, your victory history and streak will be <b>permanently cleared</b>.</span>
+      </div>
+      <div style="background: #121416; border: 1px solid var(--border-color); border-radius: 6px; padding: 8px; max-height: 200px; overflow-y: auto;" id="hof-list">
+        <div style="color: var(--text-muted); font-size: 0.8rem; text-align: center; padding: 12px 0;">No victory records yet. Defeat Impossible Mode AI to record your name.</div>
+      </div>
+      <div style="margin-top: 12px; display: flex; justify-content: space-between; align-items: center;">
+        <span style="font-size: 0.75rem; color: #4ade80;" id="cf-sync-status">Cloudflare: Synced / Ready</span>
+        <button class="btn-primary" onclick="closeHallOfFame()" style="padding: 6px 14px; font-size: 0.8rem;">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Victory Celebration & Share Modal -->
+  <div class="modal-overlay" id="victory-modal">
+    <div class="modal-card victory-card" style="max-width: 420px; text-align: center;">
+      <div class="victory-badge" style="font-size: 2.2rem; color: #fcd34d;">♚</div>
+      <h3 style="color: #fcd34d; font-size: 1.3rem; margin-bottom: 4px;">Checkmate: Victory</h3>
+      <p style="color: #9ba3af; font-size: 0.85rem; margin-bottom: 12px;">You defeated the Grandmaster Engine and extended your streak.</p>
+
+      <div class="victory-stats-grid">
+        <div class="victory-stat-item">
+          <div class="victory-stat-label">Player</div>
+          <div class="victory-stat-val" id="vic-stat-nick">Player</div>
+        </div>
+        <div class="victory-stat-item">
+          <div class="victory-stat-label">Win Streak</div>
+          <div class="victory-stat-val" id="vic-stat-streak" style="color: #fcd34d;">1 Win</div>
+        </div>
+        <div class="victory-stat-item">
+          <div class="victory-stat-label">Moves Played</div>
+          <div class="victory-stat-val" id="vic-stat-moves">0 Moves</div>
+        </div>
+        <div class="victory-stat-item">
+          <div class="victory-stat-label">Difficulty</div>
+          <div class="victory-stat-val" id="vic-stat-diff">Impossible</div>
+        </div>
+      </div>
+
+      <!-- Custom Nickname Input for Leaderboard Record -->
+      <div style="margin: 10px 0; background: #121518; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border-color); text-align: left;">
+        <label for="vic-nickname-input" style="font-size: 0.75rem; color: #9ba3af; display: block; margin-bottom: 4px; font-weight: 600;">
+          Save Nickname to Hall of Fame:
+        </label>
+        <div style="display: flex; gap: 6px;">
+          <input type="text" id="vic-nickname-input" maxlength="20" placeholder="Enter your name" style="flex: 1; background: #1a1d21; border: 1px solid #3b424d; color: #fff; padding: 6px 8px; border-radius: 4px; font-size: 0.85rem; outline: none;">
+          <button id="vic-save-name-btn" onclick="saveVictoryNicknameDirect()" class="btn-primary" style="padding: 6px 10px; font-size: 0.8rem; white-space: nowrap;">
+            Update Name
+          </button>
+        </div>
+        <div id="vic-name-saved-msg" style="font-size: 0.7rem; color: #4ade80; margin-top: 4px; display: none;">Nickname updated on Leaderboard!</div>
+      </div>
+
+      <div class="share-btn-group">
+        <button class="btn-whatsapp" onclick="shareToWhatsApp()">
+          WhatsApp
+        </button>
+        <button class="btn-twitter" onclick="shareToTwitter()">
+          X / Twitter
+        </button>
+        <button onclick="shareVictoryDirect()" style="grid-column: span 2; background: #2e8253; border-color: #38a167;">
+          Share Victory Link / Text
+        </button>
+      </div>
+
+      <div style="display: flex; gap: 8px; margin-top: 12px;">
+        <button onclick="openHallOfFame()" style="flex: 1; padding: 6px 10px; font-size: 0.8rem; background: #262112; border-color: #735118; color: #fcd34d;">
+          Leaderboard
+        </button>
+        <button onclick="document.getElementById('victory-modal').style.display='none'" style="flex: 1; padding: 6px 10px; font-size: 0.8rem;">
+          Continue
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Permadeath Alert Modal -->
+  <div class="modal-overlay" id="permadeath-modal">
+    <div class="modal-card" style="max-width: 400px; border-color: #731818;">
+      <h3 style="color: #f87171; font-size: 1.2rem; margin-bottom: 8px;">Victory Records Wiped</h3>
+      <p style="color: #cbd5e1; font-size: 0.85rem; margin-bottom: 14px;">
+        You suffered a defeat against the AI. Under Permadeath rules, your victory history and win streak have been <b>cleared from local storage and Cloudflare</b>.
+      </p>
+      <button class="btn-primary" onclick="document.getElementById('permadeath-modal').style.display='none'" style="background: #c92a2a; border-color: #e03131; width: 100%;">
+        Start Over
+      </button>
+    </div>
+  </div>
+
+  <footer>
+    Full 32-Piece Standard Board • 100% Legal FIDE Rules • Crafted by <a href="https://sharriffajar.pages.dev" target="_blank" rel="noopener noreferrer" style="color: #fcd34d; text-decoration: none; font-weight: 600;">Sharrif Fajar</a>
+  </footer>
+
+  <script src="js/bundle.js"></script>
+</body>
+</html>

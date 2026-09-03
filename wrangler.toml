@@ -1,0 +1,14 @@
+name = "impossible-chess"
+compatibility_date = "2024-09-01"
+pages_build_output_dir = "."
+
+# Cloudflare D1 Database Binding for Permadeath Leaderboard
+[[d1_databases]]
+binding = "DB"
+database_name = "impossible-chess-db"
+database_id = "your-d1-database-id-here" # Generated via `npx wrangler d1 create impossible-chess-db`
+
+# (Optional) Cloudflare KV Namespace Binding
+# [[kv_namespaces]]
+# binding = "CHESS_KV"
+# id = "your-kv-namespace-id-here"

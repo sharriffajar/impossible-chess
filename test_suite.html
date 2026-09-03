@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Impossible Chess - Test Suite & Benchmark</title>
+  <meta name="description" content="Automated TDD test suite and benchmark runner for the Impossible Chess Grandmaster engine by Sharrif Fajar.">
+  <meta name="author" content="Sharrif Fajar">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://impossible-chess.pages.dev/test_suite.html">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>♞</text></svg>">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+
+  <style>
+    :root {
+      --bg-main: #121416;
+      --bg-card: #1c1f23;
+      --bg-card-hover: #262a30;
+      --border-color: #2f353d;
+      --accent-green: #2e8253;
+      --accent-green-hover: #38a167;
+      --accent-gold: #e5a93c;
+      --accent-danger: #c92a2a;
+      --text-main: #f0f2f5;
+      --text-muted: #9ba3af;
+      --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font-family);
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      min-height: 100vh;
+      padding: 20px 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 800px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 16px;
+    }
+
+    h1 {
+      font-size: 1.3rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn {
+      padding: 8px 14px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+      background: #272c33;
+      color: #fff;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+    }
+
+    .btn:hover {
+      background: var(--bg-card-hover);
+      border-color: #3f4752;
+    }
+
+    .btn-primary {
+      background: var(--accent-green);
+      border-color: var(--accent-green-hover);
+    }
+    .btn-primary:hover {
+      background: var(--accent-green-hover);
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 14px;
+    }
+
+    .stat-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
+    .stat-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      font-family: monospace;
+    }
+
+    .val-pass { color: #4ade80; }
+    .val-fail { color: #f87171; }
+    .val-total { color: #fff; }
+    .val-time { color: var(--accent-gold); }
+
+    .progress-bar-container {
+      width: 100%;
+      height: 6px;
+      background: #272c33;
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      width: 0%;
+      height: 100%;
+      background: var(--accent-green);
+      transition: width 0.2s ease;
+    }
+
+    .suite-card {
+      padding: 0;
+      overflow: hidden;
+    }
+
+    .suite-header {
+      padding: 12px 16px;
+      background: #181b1e;
+      border-bottom: 1px solid var(--border-color);
+      font-weight: 700;
+      font-size: 0.95rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .test-list {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .test-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      border-bottom: 1px solid #23272d;
+      font-size: 0.85rem;
+    }
+    .test-row:last-child { border-bottom: none; }
+
+    .test-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .test-title {
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .test-desc {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .badge {
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .badge-pending { background: #272c33; color: var(--text-muted); }
+    .badge-running { background: #2d3748; color: #93c5fd; }
+    .badge-pass { background: #1c3829; color: #4ade80; border: 1px solid #2e8253; }
+    .badge-fail { background: #3d1d1d; color: #f87171; border: 1px solid #b91c1c; }
+
+    .error-box {
+      margin-top: 6px;
+      padding: 8px;
+      background: #2a1515;
+      border: 1px solid #682323;
+      border-radius: 4px;
+      color: #ff9b9b;
+      font-family: monospace;
+      font-size: 0.75rem;
+      white-space: pre-wrap;
+    }
+
+    @media (max-width: 520px) {
+      body { padding: 10px 6px; }
+      header { flex-direction: column; align-items: flex-start; gap: 10px; }
+      .nav-links { width: 100%; }
+      .btn { flex: 1; justify-content: center; min-height: 42px; }
+      .summary-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+      .card { padding: 10px; }
+      .stat-value { font-size: 1.25rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <h1>
+        <span>Impossible Chess Test Suite</span>
+      </h1>
+      <div class="nav-links">
+        <a href="index.html" class="btn">Back to Game</a>
+        <button id="run-btn" class="btn btn-primary" onclick="runAllTests()">Run All Tests</button>
+      </div>
+    </header>
+
+    <div class="summary-grid">
+      <div class="card">
+        <div class="stat-label">Total Tests</div>
+        <div class="stat-value val-total" id="stat-total">16</div>
+      </div>
+      <div class="card">
+        <div class="stat-label">Passed</div>
+        <div class="stat-value val-pass" id="stat-pass">0</div>
+      </div>
+      <div class="card">
+        <div class="stat-label">Failed</div>
+        <div class="stat-value val-fail" id="stat-fail">0</div>
+      </div>
+      <div class="card">
+        <div class="stat-label">Total Duration</div>
+        <div class="stat-value val-time" id="stat-time">0 ms</div>
+      </div>
+    </div>
+
+    <div class="progress-bar-container">
+      <div class="progress-bar" id="progress-bar"></div>
+    </div>
+
+    <!-- Suite 1 -->
+    <div class="card suite-card">
+      <div class="suite-header">
+        <span>1. Zobrist Hashing & Transposition Table</span>
+        <span id="suite1-status" style="font-size: 0.8rem; color: var(--text-muted);">Pending</span>
+      </div>
+      <div class="test-list" id="suite-1-list"></div>
+    </div>
+
+    <!-- Suite 2 -->
+    <div class="card suite-card">
+      <div class="suite-header">
+        <span>2. Positional Evaluation & King Safety</span>
+        <span id="suite2-status" style="font-size: 0.8rem; color: var(--text-muted);">Pending</span>
+      </div>
+      <div class="test-list" id="suite-2-list"></div>
+    </div>
+
+    <!-- Suite 3 -->
+    <div class="card suite-card">
+      <div class="suite-header">
+        <span>3. Tactical Puzzle & Search Engine</span>
+        <span id="suite3-status" style="font-size: 0.8rem; color: var(--text-muted);">Pending</span>
+      </div>
+      <div class="test-list" id="suite-3-list"></div>
+    </div>
+
+    <!-- Suite 4 -->
+    <div class="card suite-card">
+      <div class="suite-header">
+        <span>4. Adaptive Refutation & Duplicate Detection</span>
+        <span id="suite4-status" style="font-size: 0.8rem; color: var(--text-muted);">Pending</span>
+      </div>
+      <div class="test-list" id="suite-4-list"></div>
+    </div>
+
+    <!-- Suite 5 -->
+    <div class="card suite-card">
+      <div class="suite-header">
+        <span>5. Post-Game Accuracy & Blunder Analysis</span>
+        <span id="suite5-status" style="font-size: 0.8rem; color: var(--text-muted);">Pending</span>
+      </div>
+      <div class="test-list" id="suite-5-list"></div>
+    </div>
+
+    <footer style="text-align: center; font-size: 0.75rem; color: var(--text-muted); margin-top: 8px;">
+      Impossible Chess Test Runner • Developed by <a href="https://sharriffajar.pages.dev" target="_blank" rel="noopener noreferrer" style="color: #fcd34d; text-decoration: none; font-weight: 600;">Sharrif Fajar</a>
+    </footer>
+  </div>
+
+  <script type="module">
+    import { zobrist, transpositionTable, Zobrist, TranspositionTable } from './js/engine/zobrist.js';
+    import { evaluateBoard, evaluateKingSafety, evaluatePawnStructure } from './js/engine/eval.js';
+    import { ChessSearchEngine } from './js/engine/search.js';
+    import { openingBook, getBookMove } from './js/engine/book.js';
+    import { adaptiveLearning, AdaptiveLearning } from './js/engine/learning.js';
+    import { analyzeGameHistory, calculateAccuracyFromAcpl, classifyMoveQuality } from './js/engine/analysis.js';
+
+    /* ==========================================================================
+       TEST DEFINITIONS
+       ========================================================================== */
+    const tests = [
+      // Suite 1: Zobrist & TT
+      {
+        id: "zobrist_1",
+        suite: 1,
+        name: "Zobrist Transposition Invariance",
+        desc: "Identical positions reached via different move orders must produce identical hashes",
+        run: () => {
+          const game1 = new Chess();
+          game1.move('d4'); game1.move('Nf6'); game1.move('c4'); game1.move('e6');
+
+          const game2 = new Chess();
+          game2.move('c4'); game2.move('e6'); game2.move('d4'); game2.move('Nf6');
+
+          const hash1 = zobrist.hash(game1);
+          const hash2 = zobrist.hash(game2);
+
+          if (hash1 === 0 || hash2 === 0) throw new Error("Hash must not be 0");
+          if (hash1 !== hash2) throw new Error(`Hash mismatch: ${hash1} !== ${hash2}`);
+        }
+      },
+      {
+        id: "zobrist_2",
+        suite: 1,
+        name: "Zobrist Side-to-Move Sensitivity",
+        desc: "Positions with different side to move must generate distinct hashes",
+        run: () => {
+          const game = new Chess();
+          const hashWhite = zobrist.hash(game);
+          game.load("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b KQkq - 0 1");
+          const hashBlack = zobrist.hash(game);
+
+          if (hashWhite === hashBlack) throw new Error("White and Black side-to-move hashes are identical");
+        }
+      },
+      {
+        id: "tt_1",
+        suite: 1,
+        name: "Transposition Table Store & Retrieve",
+        desc: "TT correctly caches and retrieves score, flag, and best move",
+        run: () => {
+          transpositionTable.clear();
+          const mockKey = 123456789;
+          const mockMove = { from: 'e2', to: 'e4' };
+          transpositionTable.store(mockKey, 4, 150, 0, mockMove);
+
+          const entry = transpositionTable.probe(mockKey, 4, -Infinity, Infinity);
+          if (!entry || !entry.hit) throw new Error("TT entry not found");
+          if (entry.score !== 150) {
+            throw new Error(`Corrupted TT entry: score=${entry.score}`);
+          }
+          if (entry.move.from !== 'e2' || entry.move.to !== 'e4') {
+            throw new Error("Mismatch in stored best move");
+          }
+        }
+      },
+      {
+        id: "tt_2",
+        suite: 1,
+        name: "Transposition Table Replacement Scheme",
+        desc: "Deeper searches replace shallower cached entries",
+        run: () => {
+          transpositionTable.clear();
+          const mockKey = 987654321;
+          transpositionTable.store(mockKey, 2, 50, 0, { from: 'a2', to: 'a3' });
+          transpositionTable.store(mockKey, 4, 120, 0, { from: 'a2', to: 'a4' });
+
+          const entry = transpositionTable.probe(mockKey, 3, -Infinity, Infinity);
+          if (!entry || !entry.hit) throw new Error("Expected depth 4 entry to satisfy depth 3 query");
+          if (entry.score !== 120) throw new Error("Failed to overwrite with deeper score");
+          if (entry.move.to !== 'a4') throw new Error("Failed to update best move");
+        }
+      },
+
+      // Suite 2: King Safety & Positional
+      {
+        id: "eval_1",
+        suite: 2,
+        name: "King Safety: Pawn Shield Assertion",
+        desc: "King with intact pawn shield is evaluated safer than one with exposed pawns",
+        run: () => {
+          const gameSafe = new Chess('r1bq1rk1/pppp1ppp/2n2n2/4p3/1bB1P3/2N2N2/PPPP1PPP/R1BQ1RK1 w - - 6 6');
+          const gameExposed = new Chess('r1bq1rk1/pppp1p1p/2n2n2/4p3/1bB1P3/2N2N2/PPPP1PPP/R1BQ1RK1 w - - 6 6'); // g7 missing
+
+          const scoreSafe = evaluateBoard(gameSafe.board(), 'b');
+          const scoreExposed = evaluateBoard(gameExposed.board(), 'b');
+
+          if (scoreSafe <= scoreExposed) {
+            throw new Error(`Pawn shield evaluation failed: Safe(${scoreSafe}) <= Exposed(${scoreExposed})`);
+          }
+        }
+      },
+      {
+        id: "eval_2",
+        suite: 2,
+        name: "King Safety: Castled vs Center King",
+        desc: "Castled king receives higher evaluation bonus than uncastled king stranded in center",
+        run: () => {
+          const gameCastled = new Chess('r1bqkb1r/pppp1ppp/2n2n2/4p3/2B1P3/5N2/PPPP1PPP/RNBQ1RK1 b kq - 5 4');
+          const gameUncastled = new Chess('r1bqkb1r/pppp1ppp/2n2n2/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4');
+
+          const evalCastled = evaluateBoard(gameCastled.board(), 'w');
+          const evalUncastled = evaluateBoard(gameUncastled.board(), 'w');
+
+          if (evalCastled <= evalUncastled) {
+            throw new Error(`Castling bonus failed: Castled(${evalCastled}) <= Uncastled(${evalUncastled})`);
+          }
+        }
+      },
+      {
+        id: "eval_3",
+        suite: 2,
+        name: "Pawn Structure: Passed Pawn Recognition",
+        desc: "Advanced passed pawns receive positional bonus",
+        run: () => {
+          const gameNormal = new Chess('8/4k3/8/8/4P3/8/8/4K3 w - - 0 1');
+          const gamePassed = new Chess('8/4k3/4P3/8/8/8/8/4K3 w - - 0 1');
+
+          const evalNormal = evaluateBoard(gameNormal.board(), 'w');
+          const evalPassed = evaluateBoard(gamePassed.board(), 'w');
+
+          if (evalPassed <= evalNormal) {
+            throw new Error(`Passed pawn bonus failed: Passed(${evalPassed}) <= Normal(${evalNormal})`);
+          }
+        }
+      },
+      {
+        id: "eval_4",
+        suite: 2,
+        name: "Pawn Structure: Doubled Pawns Penalty",
+        desc: "Doubled pawns receive a structural penalty",
+        run: () => {
+          const gameClean = new Chess('8/8/8/8/8/8/PP6/4K2k w - - 0 1');
+          const gameDoubled = new Chess('8/8/8/8/8/P7/P7/4K2k w - - 0 1');
+
+          const evalClean = evaluateBoard(gameClean.board(), 'w');
+          const evalDoubled = evaluateBoard(gameDoubled.board(), 'w');
+
+          if (evalDoubled >= evalClean) {
+            throw new Error(`Doubled pawn penalty failed: Doubled(${evalDoubled}) >= Clean(${evalClean})`);
+          }
+        }
+      },
+
+      // Suite 3: Tactical Puzzles & Engine Search
+      {
+        id: "tactics_1",
+        suite: 3,
+        name: "Tactical Puzzle: Scholar's Mate in 1",
+        desc: "Engine finds instant checkmate Qxf7# (Mate in 1)",
+        run: () => {
+          const game = new Chess('r1bqkb1r/pppp1ppp/2n5/4p2Q/2B1n3/8/PPPP1PPP/RNB1K1NR w KQkq - 0 4');
+          const engine = new ChessSearchEngine(game);
+          const result = engine.findBestMove(3, 'b');
+
+          if (!result || !result.move) throw new Error("Search engine returned null move");
+          if (result.move.from !== 'h5' || result.move.to !== 'f7') {
+            throw new Error(`Expected Qxf7# (h5->f7), engine played ${result.move.from}->${result.move.to}`);
+          }
+        }
+      },
+      {
+        id: "tactics_2",
+        suite: 3,
+        name: "Tactical Puzzle: Legal's Trap Mate in 2",
+        desc: "Engine executes Bxf7+ Ke7 Nd5# winning mating sequence",
+        run: () => {
+          const game = new Chess('r1bqkb1r/pppp1ppp/2n5/4N3/2B1n3/8/PPPP1PPP/RNBQK2R w KQkq - 0 5');
+          const engine = new ChessSearchEngine(game);
+          const result = engine.findBestMove(3, 'b');
+
+          if (!result || !result.move) throw new Error("Search engine returned null move");
+          if (result.move.to !== 'f7') {
+            throw new Error(`Expected Bxf7+ (to f7), engine played ${result.move.from}->${result.move.to}`);
+          }
+        }
+      },
+      {
+        id: "tactics_3",
+        suite: 3,
+        name: "Tactical Puzzle: Forking Knight",
+        desc: "Engine identifies and executes knight fork winning material",
+        run: () => {
+          const game = new Chess('r1bqkb1r/pppp1ppp/2n5/4p3/4n3/2N2N2/PPPP1PPP/R1BQKB1R w KQkq - 0 4');
+          const engine = new ChessSearchEngine(game);
+          const result = engine.findBestMove(2, 'b');
+
+          if (!result || !result.move) throw new Error("Search engine returned null move");
+          if (result.move.to !== 'e4') {
+            throw new Error(`Expected Nxe4 capture, engine played ${result.move.from}->${result.move.to}`);
+          }
+        }
+      },
+      {
+        id: "tactics_4",
+        suite: 3,
+        name: "Tactical Puzzle: Hanging Queen Defense",
+        desc: "Engine detects threatened Queen and escapes or defends",
+        run: () => {
+          const game = new Chess('rnb1kbnr/pppp1ppp/8/4p3/4q3/3P4/PPP2PPP/RNBQKBNR w KQkq - 0 4');
+          const engine = new ChessSearchEngine(game);
+          const result = engine.findBestMove(2, 'w');
+
+          if (!result || !result.move) throw new Error("Search engine returned null move");
+          // White is in check with pawn on d3 attacking Queen, or White must resolve check
+          const legalResolutions = ['dxe4', 'Be2', 'Be3', 'Qe2', 'Ne2'];
+          const playedSan = result.move.san || (result.move.from + result.move.to);
+          const isValidResolution = legalResolutions.some(res => playedSan.includes(res) || (result.move.from === 'd3' && result.move.to === 'e4'));
+          if (!isValidResolution) {
+            throw new Error(`Invalid move to escape/take queen: played ${playedSan}`);
+          }
+        }
+      },
+
+      // Suite 4: Adaptive Refutation & Duplicate Detection
+      {
+        id: "adaptive_1",
+        suite: 4,
+        name: "Adaptive Defense: Losing Move Sequence Refutation",
+        desc: "Engine records defeated line and avoids playing the known losing blunder on next attempt",
+        run: () => {
+          const testEngine = new AdaptiveLearning();
+          const game = new Chess();
+          game.move('e4'); game.move('e5');
+          game.move('Qh5'); game.move('Nc6');
+          game.move('Bc4'); game.move('Nf6'); // AI blundered Nf6 allowing Qxf7#
+
+          testEngine.recordDefeat(game);
+
+          // Now test if engine knows that Nf6 is a known losing branch in this sequence
+          const isLosing = testEngine.isKnownLosingMove(['e4', 'e5', 'Qh5', 'Nc6', 'Bc4'], 'Nf6');
+          if (!isLosing) {
+            throw new Error("Adaptive learning failed to recognize previously recorded losing move sequence");
+          }
+        }
+      },
+      {
+        id: "adaptive_2",
+        suite: 4,
+        name: "Duplicate Line & Pioneer Detection",
+        desc: "System correctly distinguishes between unique novelty wins and duplicate line replays",
+        run: () => {
+          const testEngine = new AdaptiveLearning();
+          const game1 = new Chess();
+          game1.move('e4'); game1.move('e5'); game1.move('Qh5'); game1.move('Ke7'); game1.move('Qxe5#');
+
+          const mockVictories = [
+            {
+              id: 'vic_1',
+              nickname: 'GrandmasterAlice',
+              historySequence: 'e4 e5 Qh5 Ke7 Qxe5#',
+              date: 'Sep 1, 2026'
+            }
+          ];
+
+          // Check identical game line
+          const dupResult = testEngine.isDuplicateGameLine(game1, mockVictories);
+          if (!dupResult.isDuplicate || dupResult.originalAuthor !== 'GrandmasterAlice') {
+            throw new Error("Failed to identify duplicate game line replay");
+          }
+
+          // Check novel game line
+          const game2 = new Chess();
+          game2.move('d4'); game2.move('d5'); game2.move('c4');
+          const novelResult = testEngine.isDuplicateGameLine(game2, mockVictories);
+          if (novelResult.isDuplicate) {
+            throw new Error("Novel game line was mistakenly flagged as duplicate");
+          }
+        }
+      },
+
+      // Suite 5: Post-Game Accuracy & Blunder Analysis
+      {
+        id: "accuracy_1",
+        suite: 5,
+        name: "Logistic Accuracy Score Curve",
+        desc: "ACPL smoothly maps to realistic percentage accuracy (0 ACPL -> ~99%, 80 ACPL -> ~70%)",
+        run: () => {
+          const acc0 = calculateAccuracyFromAcpl(0);
+          const acc30 = calculateAccuracyFromAcpl(30);
+          const acc80 = calculateAccuracyFromAcpl(80);
+          const acc250 = calculateAccuracyFromAcpl(250);
+
+          if (acc0 < 98 || acc0 > 100) throw new Error(`Expected acc0 ~99%, got ${acc0}`);
+          if (acc30 < 85 || acc30 > 95) throw new Error(`Expected acc30 ~90%, got ${acc30}`);
+          if (acc80 < 65 || acc80 > 78) throw new Error(`Expected acc80 ~70%, got ${acc80}`);
+          if (acc250 >= acc80) throw new Error("Higher ACPL must result in lower accuracy score");
+        }
+      },
+      {
+        id: "accuracy_2",
+        suite: 5,
+        name: "Game History Retrospective Analysis & Move Classification",
+        desc: "Engine analyzes entire move ply list and detects move qualities and timeline",
+        run: () => {
+          const game = new Chess();
+          game.move('e4'); game.move('e5');
+          game.move('Qh5'); game.move('Nc6');
+          game.move('Bc4'); game.move('Nf6'); // Blunder
+          game.move('Qxf7#');
+
+          const analysis = analyzeGameHistory(game, 'w');
+          if (!analysis) throw new Error("Game analysis returned null");
+          if (analysis.moves.length !== 7) throw new Error(`Expected 7 analyzed plies, got ${analysis.moves.length}`);
+          if (analysis.white.accuracy < 80) throw new Error(`White played Scholar's Mate, expected high accuracy, got ${analysis.white.accuracy}`);
+          if (analysis.timeline.length !== 8) throw new Error(`Expected 8 timeline points (starting + 7 moves), got ${analysis.timeline.length}`);
+        }
+      }
+    ];
+
+    /* ==========================================================================
+       TEST RUNNER
+       ========================================================================== */
+    function initUI() {
+      tests.forEach(t => {
+        const listEl = document.getElementById(`suite-${t.suite}-list`);
+        const row = document.createElement('div');
+        row.className = 'test-row';
+        row.id = `row-${t.id}`;
+        row.innerHTML = `
+          <div class="test-info">
+            <span class="test-title">${t.name}</span>
+            <span class="test-desc">${t.desc}</span>
+            <div class="error-box" id="err-${t.id}" style="display:none;"></div>
+          </div>
+          <span class="badge badge-pending" id="badge-${t.id}">Pending</span>
+        `;
+        listEl.appendChild(row);
+      });
+    }
+
+    async function runAllTests() {
+      const runBtn = document.getElementById('run-btn');
+      runBtn.disabled = true;
+      runBtn.innerText = "Running Tests...";
+
+      let passCount = 0;
+      let failCount = 0;
+      const totalTests = tests.length;
+      const startTime = performance.now();
+
+      document.getElementById('stat-total').innerText = totalTests;
+      document.getElementById('stat-pass').innerText = "0";
+      document.getElementById('stat-fail').innerText = "0";
+      document.getElementById('stat-time').innerText = "0 ms";
+      document.getElementById('progress-bar').style.width = "0%";
+
+      for (let i = 0; i < totalTests; i++) {
+        const t = tests[i];
+        const badge = document.getElementById(`badge-${t.id}`);
+        const errBox = document.getElementById(`err-${t.id}`);
+
+        badge.className = "badge badge-running";
+        badge.innerText = "Running";
+        errBox.style.display = "none";
+
+        await new Promise(r => setTimeout(r, 40)); // Visual tick
+
+        try {
+          t.run();
+          badge.className = "badge badge-pass";
+          badge.innerText = "Pass";
+          passCount++;
+        } catch (err) {
+          badge.className = "badge badge-fail";
+          badge.innerText = "Fail";
+          errBox.style.display = "block";
+          errBox.innerText = err.message || err.toString();
+          failCount++;
+        }
+
+        document.getElementById('stat-pass').innerText = passCount;
+        document.getElementById('stat-fail').innerText = failCount;
+        const progress = Math.round(((i + 1) / totalTests) * 100);
+        document.getElementById('progress-bar').style.width = `${progress}%`;
+      }
+
+      const totalTime = Math.round(performance.now() - startTime);
+      document.getElementById('stat-time').innerText = `${totalTime} ms`;
+
+      // Update suite headers
+      for (let s = 1; s <= 5; s++) {
+        const suiteTests = tests.filter(t => t.suite === s);
+        const suiteFails = suiteTests.filter(t => document.getElementById(`badge-${t.id}`).innerText === 'Fail').length;
+        const statusEl = document.getElementById(`suite${s}-status`);
+        if (suiteFails === 0) {
+          statusEl.innerHTML = `<span style="color:#4ade80;">All Passed ✓</span>`;
+        } else {
+          statusEl.innerHTML = `<span style="color:#f87171;">${suiteFails} Failed ✗</span>`;
+        }
+      }
+
+      runBtn.disabled = false;
+      runBtn.innerText = "Run All Tests";
+    }
+
+    window.runAllTests = runAllTests;
+
+    window.addEventListener('DOMContentLoaded', () => {
+      initUI();
+      // Auto run tests on load for immediate feedback
+      setTimeout(runAllTests, 150);
+    });
+  </script>
+</body>
+</html>

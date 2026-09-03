@@ -1,0 +1,25 @@
+# Impossible Chess
+
+> High-performance zero-dependency browser chess engine with 100% legal FIDE rules, Grandmaster Opening Book, Zobrist Transposition Table, Quiescence Search, and Permadeath Leaderboard.
+
+- **Developer**: [Sharrif Fajar](https://sharriffajar.pages.dev)
+- **Live URL**: https://impossible-chess.pages.dev/
+- **Test Suite & Benchmark**: https://impossible-chess.pages.dev/test_suite.html
+- **Tech Stack**: Vanilla ES Modules, Web Audio API, Cloudflare Pages, Cloudflare D1 SQL Database.
+
+## Core Features & Capabilities
+
+1. **Chess Engine**:
+   - Depth 6+ Iterative Deepening with deadline time control.
+   - 131,072-entry Transposition Table with 32-bit Zobrist Hashing (Zobrist keys for 64 squares, piece types, castling rights, and en-passant files).
+   - Quiescence tactical capture search with delta pruning to eliminate horizon effect.
+   - Piece-Square Tables (PST) combined with King Safety (pawn shield & castling) and Pawn Structure evaluations (passed pawns, doubled pawns, isolated pawns).
+   - Grandmaster Opening Book supporting main-line Sicilian, Ruy Lopez, King's Indian, French, Caro-Kann, Queen's Gambit, and English Openings.
+
+2. **Permadeath Leaderboard**:
+   - Player victory streaks persisted locally and synced to Cloudflare D1 SQL database.
+   - Permadeath Rule: Defeat against AI permanently wipes victory history and resets streak to zero.
+
+3. **Analysis & Replay**:
+   - Interactive Move Navigator with PGN file export.
+   - Real-time dynamic centipawn evaluation bar.

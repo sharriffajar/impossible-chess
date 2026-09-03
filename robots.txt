@@ -1,0 +1,35 @@
+# ==============================================================================
+# Impossible Chess - Robots.txt
+# Allows indexing for standard search engines and AI / LLM discovery crawlers
+# Developer: Sharrif Fajar (https://sharriffajar.pages.dev)
+# ==============================================================================
+
+User-agent: *
+Allow: /
+Disallow: /functions/
+Disallow: /api/
+
+# Explicit AI / LLM Crawlers
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
+# Sitemaps & LLM Discovery
+Sitemap: https://impossible-chess.pages.dev/sitemap.xml
